@@ -1,132 +1,155 @@
-using System.Diagnostics;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
-namespace Brutforce;
-
-public partial class BruteForce : Form
+namespace Brutforce
 {
-    private const ulong MaxAttempts = 1000000000;
-    private bool isBruteforceRunning = false;
-
-    public BruteForce()
+    public partial class BruteForce : Form
     {
-        InitializeComponent();
-        Startup();
-    }
+        private bool isBruteforceRunning = false;
+        private readonly string[] runningTitles = { "Suche Passwort", "Suche Passwort.", "Suche Passwort..", "Suche Passwort..." };
 
-    private void Startup()
-    {
-        ControlBox = true;
-        DoubleBuffered = true;
-        MaximizedBounds = Screen.FromHandle(Handle).WorkingArea;
-    }
-
-    private void btn1_Click(object sender, EventArgs e)
-    {
-        // Lade das PW aus dem Textfeld
-        var password = tbpassword.Text;
-
-        // Prüfe ob das PW leer
-        if (string.IsNullOrEmpty(password))
+        public BruteForce()
         {
-            MessageBox.Show("Bitte geben Sie ein Passwort ein!");
-            return;
-        }
-        // Prüfe ob das PW Leerzeichen enthält
-        if (password.Contains(" "))
-        {
-            MessageBox.Show("Das Passwort darf keine Leerzeichen enthalten!");
-            return;
+            InitializeComponent();
+            Startup();
+            UpdateRunningTitle(); // Starten Sie den Task für den Lauftext früher
         }
 
-        // Prüfe ob das Passwort nur "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" enthält
-        if (password.Any(c => !"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".Contains(c)))
+        private void Startup()
         {
-            MessageBox.Show("Das Passwort darf nur aus den Zeichen 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' bestehen!");
-            return;
+            ControlBox = true;
+            DoubleBuffered = true;
+            MaximizedBounds = Screen.FromHandle(Handle).WorkingArea;
         }
 
-        // Wenn Keine Fehler aufgetreten sind starte das Bruteforce in einem separaten Thread
-        tbpassword.Enabled = false;
-        btn1.Enabled = false;
-        isBruteforceRunning = true;
-        Thread bruteforceThread = new Thread(() => Bruteforce(password));
-        bruteforceThread.IsBackground = true;
-        bruteforceThread.Start();
-
-        // Ändere die Überschrift in der Top-Bar
-        Thread titleThread = new Thread(() =>
+        private async void btn1_Click(object sender, EventArgs e)
         {
-            string[] titles = { "Running", "Running.", "Running..", "Running..." };
-            int index = 0;
+            // Lade das PW aus dem Textfeld
+            var password = tbpassword.Text;
+
+            // Prüfe ob das PW leer
+            if (string.IsNullOrEmpty(password))
+            {
+                MessageBox.Show("Bitte geben Sie ein Passwort ein!");
+                return;
+            }
+            // Prüfe ob das PW Leerzeichen enthält
+            if (password.Contains(" "))
+            {
+                MessageBox.Show("Das Passwort darf keine Leerzeichen enthalten!");
+                return;
+            }
+
+            // Prüfe ob das Passwort nur "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789" enthält
+            if (password.Any(c => !"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".Contains(c)))
+            {
+                MessageBox.Show("Das Passwort darf nur aus den Zeichen 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789' bestehen!");
+                return;
+            }
+
+            // Wenn Keine Fehler aufgetreten sind starte das Bruteforce in einem separaten Task
+            tbpassword.Enabled = false;
+            btn1.Enabled = false;
+            isBruteforceRunning = true;
+            Text = "Suche Passwort";
+
+            // Ändere die Überschrift in der Top-Bar
+            UpdateRunningTitle();
+
+            await Task.Run(async () =>
+            {
+                await Bruteforce(password);
+            });
+
+            // Nach Abschluss des Bruteforce-Prozesses den Lauftext entfernen
+            Invoke(new Action(() =>
+            {
+                Text = "BruteForce Tool";
+                tbpassword.Enabled = true;
+                btn1.Enabled = true;
+            }));
+        }
+
+        // Lauftext aktualisieren (wird in einem eigenen Task ausgeführt)
+        private async void UpdateRunningTitle()
+        {
             while (isBruteforceRunning)
             {
-                Invoke(new Action(() => { Text = titles[index]; }));
-                index = (index + 1) % titles.Length;
-                Thread.Sleep(500);
+                for (int i = 0; i < runningTitles.Length; i++)
+                {
+                    await Task.Delay(500);
+                    Invoke(new Action(() =>
+                    {
+                        Text = runningTitles[i];
+                    }));
+                }
             }
-        });
-        titleThread.IsBackground = true;
-        titleThread.Start();
-    }
+        }
 
-    // Bruteforce
-    private void Bruteforce(string password)
-    {
-        var stopwatch = new Stopwatch();
-        stopwatch.Start();
-        ulong attempts = 0;
-        var found = false;
-        var chars = Enumerable.Range(32, 95).Select(i => (char)i).ToArray(); // ASCII-Zeichen von 32 bis 126 (inklusive) entsprechen den druckbaren Zeichen
-        var length = 1;
-
-        while (!found && attempts < MaxAttempts) // Begrenze die Anzahl der Versuche
+        // Bruteforce
+        private async Task Bruteforce(string password)
         {
-            var combinations = (ulong)Math.Pow(chars.Length, length);
-            for (ulong i = 0; i < combinations; i++)
+            var stopwatch = new System.Diagnostics.Stopwatch();
+            stopwatch.Start();
+            ulong attempts = 0;
+            var found = false;
+            var chars = Enumerable.Range(32, 95).Select(i => (char)i).ToArray(); // ASCII-Zeichen von 32 bis 126 (inklusive) entsprechen den druckbaren Zeichen
+
+            await Task.Run(() =>
             {
-                var guess = "";
-                var j = i;
-                for (var k = 0; k < length; k++)
+                Parallel.For(1, int.MaxValue, (length, loopState) =>
                 {
-                    guess += chars[(int)(j % (ulong)chars.Length)];
-                    j /= (ulong)chars.Length;
-                }
-                attempts++;
-                if (guess == password)
-                {
-                    found = true;
-                    break;
-                }
+                    if (found)
+                    {
+                        loopState.Break();
+                        return;
+                    }
+
+                    var combinations = (ulong)Math.Pow(chars.Length, length);
+                    for (ulong i = 0; i < combinations; i++)
+                    {
+                        var guess = "";
+                        var j = i;
+                        for (var k = 0; k < length; k++)
+                        {
+                            guess += chars[(int)(j % (ulong)chars.Length)];
+                            j /= (ulong)chars.Length;
+                        }
+                        attempts++;
+                        if (guess == password)
+                        {
+                            found = true;
+                            loopState.Break();
+                            break;
+                        }
+                    }
+                });
+            });
+
+            stopwatch.Stop();
+
+            // UI aktualisieren und Nachricht anzeigen
+            string message;
+            if (found)
+            {
+                message = $"Das Passwort wurde gefunden! \n" +
+                          $"\nPasswort: {password} " +
+                          $"\n\nVersuche: {attempts} " +
+                          $"\nZeit: {stopwatch.ElapsedMilliseconds}ms ";
             }
-            length++;
-        }
+            else
+            {
+                message = $"Das Passwort konnte nicht gefunden werden.";
+            }
 
-        stopwatch.Stop();
-
-        // UI aktualisieren und Nachricht anzeigen
-        string message;
-        if (found)
-        {
-            message = $"Das Passwort wurde gefunden! \n" +
-                      $"\nPasswort: {password} " +
-                      $"\n\nVersuche: {attempts} " +
-                      $"\nZeit: {stopwatch.ElapsedMilliseconds}ms " +
-                      $"\nVersuche pro Sekunde: {(((double)attempts / stopwatch.ElapsedMilliseconds) * 1000):0.#} Tsd.";
+            // UI aktualisieren und Nachricht anzeigen
+            Invoke(new Action(() =>
+            {
+                isBruteforceRunning = false;
+                MessageBox.Show(message, found ? "Passwort gefunden" : "Passwort nicht gefunden", MessageBoxButtons.OK, found ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+            }));
         }
-        else
-        {
-            message = $"Das Passwort konnte nicht gefunden werden.";
-        }
-
-        // BeginInvoke verwenden, um die UI im UI-Thread zu aktualisieren
-        BeginInvoke((MethodInvoker)delegate
-        {
-            MessageBox.Show(message, found ? "Passwort gefunden" : "Passwort nicht gefunden", MessageBoxButtons.OK, found ? MessageBoxIcon.Information : MessageBoxIcon.Error);
-            tbpassword.Enabled = true;
-            btn1.Enabled = true;
-            this.Text = "BruteForce Tool";
-        });
     }
 }
-
-
