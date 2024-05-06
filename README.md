@@ -1,2 +1,5 @@
-![image](https://github.com/le3tspeak/Brutforce-Aufgabe/assets/21110785/49925723-6d60-447b-80ac-95134f172d70)
-![image](https://github.com/le3tspeak/Brutforce-Aufgabe/assets/21110785/f8fb4201-fa04-4bad-971e-36a262beb0b9)
+![image](https://github.com/le3tspeak/Brutforce-Aufgabe/assets/21110785/5e325800-b069-4a79-9a7b-d7489160c563)
+
+![image](https://github.com/le3tspeak/Brutforce-Aufgabe/assets/21110785/b04986ff-200a-4512-9186-05ecc17d86d7)
+
+![image](https://github.com/le3tspeak/Brutforce-Aufgabe/assets/21110785/357ae53c-f513-470d-bb8b-e84871bf4473)
