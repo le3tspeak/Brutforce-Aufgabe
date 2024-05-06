@@ -60,25 +60,13 @@ public partial class BruteForce : Form
             int index = 0;
             while (isBruteforceRunning)
             {
-                this.Invoke(new Action(() => { this.Text = titles[index]; }));
+                Invoke(new Action(() => { Text = titles[index]; }));
                 index = (index + 1) % titles.Length;
                 Thread.Sleep(500);
             }
         });
         titleThread.IsBackground = true;
         titleThread.Start();
-    }
-
-    private void SetControlProperties(Control control, Action action)
-    {
-        if (control.InvokeRequired)
-        {
-            control.Invoke(action);
-        }
-        else
-        {
-            action();
-        }
     }
 
     // Bruteforce
@@ -88,21 +76,20 @@ public partial class BruteForce : Form
         stopwatch.Start();
         ulong attempts = 0;
         var found = false;
-        var chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".ToCharArray();
+        var chars = Enumerable.Range(32, 95).Select(i => (char)i).ToArray(); // ASCII-Zeichen von 32 bis 126 (inklusive) entsprechen den druckbaren Zeichen
         var length = 1;
 
         while (!found && attempts < MaxAttempts) // Begrenze die Anzahl der Versuche
         {
-            var combinations = Math.Pow(chars.Length, length);
-            for (var i = 0; i < combinations; i++)
+            var combinations = (ulong)Math.Pow(chars.Length, length);
+            for (ulong i = 0; i < combinations; i++)
             {
                 var guess = "";
                 var j = i;
                 for (var k = 0; k < length; k++)
                 {
-                    guess += chars[j % chars.Length];
-                    j /= chars.Length;
-
+                    guess += chars[(int)(j % (ulong)chars.Length)];
+                    j /= (ulong)chars.Length;
                 }
                 attempts++;
                 if (guess == password)
@@ -112,44 +99,34 @@ public partial class BruteForce : Form
                 }
             }
             length++;
-
-            // Aktualisiere die Benutzeroberfläche in einem separaten Thread
-            SetControlProperties(this, () =>
-            {
-                lblAktuellerVersuch.Text = $"Aktueller Versuch: {password}";
-                lblVersucheProSekunde.Text = $"Versuche pro Sekunde: {(((double)attempts / stopwatch.ElapsedMilliseconds) * 1000):0.##} Tsd.";
-            });
         }
 
         stopwatch.Stop();
 
+        // UI aktualisieren und Nachricht anzeigen
+        string message;
         if (found)
         {
-            MessageBox.Show($"Das Passwort wurde gefunden! \n" +
-                $"\nPasswort: {password} " +
-                $"\n\nVersuche: {attempts} " +
-                $"\nZeit: {stopwatch.ElapsedMilliseconds}ms " +
-                $"\nVersuche pro Sekunde: {(((double)attempts / stopwatch.ElapsedMilliseconds) * 1000):0.##} Tsd.",
-                "Passwort gefunden", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-            SetControlProperties(this, () =>
-            {
-                tbpassword.Enabled = true;
-                btn1.Enabled = true;
-            });
+            message = $"Das Passwort wurde gefunden! \n" +
+                      $"\nPasswort: {password} " +
+                      $"\n\nVersuche: {attempts} " +
+                      $"\nZeit: {stopwatch.ElapsedMilliseconds}ms " +
+                      $"\nVersuche pro Sekunde: {(((double)attempts / stopwatch.ElapsedMilliseconds) * 1000):0.#} Tsd.";
         }
         else
         {
-            MessageBox.Show($"Das Passwort konnte nicht gefunden werden.");
-            SetControlProperties(this, () =>
-            {
-                tbpassword.Enabled = true;
-                btn1.Enabled = true;
-            });
+            message = $"Das Passwort konnte nicht gefunden werden.";
         }
 
-        // Setze die Überschrift wieder auf "BruteForce Tool" nach Abschluss des Bruteforce-Prozesses
-        isBruteforceRunning = false;
-        SetControlProperties(this, () => { this.Text = "BruteForce Tool"; });
+        // BeginInvoke verwenden, um die UI im UI-Thread zu aktualisieren
+        BeginInvoke((MethodInvoker)delegate
+        {
+            MessageBox.Show(message, found ? "Passwort gefunden" : "Passwort nicht gefunden", MessageBoxButtons.OK, found ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+            tbpassword.Enabled = true;
+            btn1.Enabled = true;
+            this.Text = "BruteForce Tool";
+        });
     }
 }
+
+

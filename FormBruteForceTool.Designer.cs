@@ -30,8 +30,6 @@ partial class BruteForce
     {
         btn1 = new Button();
         tbpassword = new TextBox();
-        lblAktuellerVersuch = new Label();
-        lblVersucheProSekunde = new Label();
         SuspendLayout();
         // 
         // btn1
@@ -52,36 +50,12 @@ partial class BruteForce
         tbpassword.Size = new Size(385, 23);
         tbpassword.TabIndex = 1;
         // 
-        // lblAktuellerVersuch
-        // 
-        lblAktuellerVersuch.AutoSize = true;
-        lblAktuellerVersuch.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        lblAktuellerVersuch.ForeColor = Color.White;
-        lblAktuellerVersuch.Location = new Point(77, 46);
-        lblAktuellerVersuch.Name = "lblAktuellerVersuch";
-        lblAktuellerVersuch.Size = new Size(116, 17);
-        lblAktuellerVersuch.TabIndex = 4;
-        lblAktuellerVersuch.Text = "Aktueller Versuch:";
-        // 
-        // lblVersucheProSekunde
-        // 
-        lblVersucheProSekunde.AutoSize = true;
-        lblVersucheProSekunde.Font = new Font("Segoe UI Semibold", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-        lblVersucheProSekunde.ForeColor = Color.White;
-        lblVersucheProSekunde.Location = new Point(47, 71);
-        lblVersucheProSekunde.Name = "lblVersucheProSekunde";
-        lblVersucheProSekunde.Size = new Size(146, 17);
-        lblVersucheProSekunde.TabIndex = 6;
-        lblVersucheProSekunde.Text = "Versuche pro Sekunde:";
-        // 
         // BruteForce
         // 
         AutoScaleDimensions = new SizeF(7F, 15F);
         AutoScaleMode = AutoScaleMode.Font;
         BackColor = Color.Black;
-        ClientSize = new Size(492, 103);
-        Controls.Add(lblVersucheProSekunde);
-        Controls.Add(lblAktuellerVersuch);
+        ClientSize = new Size(492, 48);
         Controls.Add(tbpassword);
         Controls.Add(btn1);
         FormBorderStyle = FormBorderStyle.FixedSingle;
@@ -96,6 +70,4 @@ partial class BruteForce
 
     private Button btn1;
     private TextBox tbpassword;
-    private Label lblAktuellerVersuch;
-    private Label lblVersucheProSekunde;
 }
